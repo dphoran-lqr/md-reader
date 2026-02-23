@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MD Reader</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
+
+  <style>
+    /* ─── Reset & Variables ──────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #f5f0e8;
+      --surface:   #ede8df;
+      --sidebar:   #1c1917;
+      --sidebar-hover: #2c2825;
+      --sidebar-active: #3d3530;
+      --ink:       #1c1917;
+      --ink-muted: #6b6560;
+      --ink-faint: #a09890;
+      --accent:    #c0502a;
+      --accent-light: #e8c4b5;
+      --border:    #ddd8ce;
+      --code-bg:   #e8e3d8;
+      --shadow:    0 1px 3px rgba(0,0,0,.08), 0 4px 16px rgba(0,0,0,.06);
+      --r:         6px;
+      --sidebar-w: 280px;
+      --font-body: 'Lora', Georgia, serif;
+      --font-ui:   'DM Sans', system-ui, sans-serif;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: var(--font-ui);
+      background: var(--bg);
+      color: var(--ink);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ─── Auth Screen ────────────────────────────────────────── */
+    #auth-screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      gap: 1.5rem;
+      text-align: center;
+      padding: 2rem;
+      background: var(--bg);
+    }
+
+    .auth-logo {
+      width: 64px;
+      height: 64px;
+      background: var(--ink);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      margin-bottom: .5rem;
+    }
+
+    .auth-title {
+      font-family: var(--font-body);
+      font-size: 2.25rem;
+      font-weight: 600;
+      letter-spacing: -.02em;
+      line-height: 1.2;
+    }
+
+    .auth-sub {
+      color: var(--ink-muted);
+      font-size: .95rem;
+      max-width: 320px;
+      line-height: 1.6;
+    }
+
+    .btn-connect {
+      display: inline-flex;
+      align-items: center;
+      gap: .6rem;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: var(--r);
+      padding: .85rem 2rem;
+      font-family: var(--font-ui);
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background .15s, transform .1s;
+      margin-top: .5rem;
+    }
+    .btn-connect:hover { background: #a84424; transform: translateY(-1px); }
+    .btn-connect:active { transform: translateY(0); }
+
+    /* ─── Config Warning ─────────────────────────────────────── */
+    #config-warning {
+      background: #fff3cd;
+      border: 1px solid #ffc107;
+      border-radius: var(--r);
+      padding: 1rem 1.25rem;
+      font-size: .875rem;
+      color: #856404;
+      max-width: 400px;
+      line-height: 1.6;
+      display: none;
+    }
+    #config-warning code {
+      background: rgba(0,0,0,.08);
+      padding: .1em .3em;
+      border-radius: 3px;
+      font-family: monospace;
+    }
+
+    /* ─── App Shell ──────────────────────────────────────────── */
+    #app {
+      display: none;
+      height: 100%;
+      flex-direction: row;
+    }
+    #app.visible { display: flex; }
+
+    /* ─── Sidebar ────────────────────────────────────────────── */
+    #sidebar {
+      width: var(--sidebar-w);
+      min-width: var(--sidebar-w);
+      background: var(--sidebar);
+      color: #e8e3dc;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      overflow: hidden;
+      transition: width .25s ease;
+    }
+
+    .sidebar-header {
+      padding: 1.25rem 1rem 1rem;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: .5rem;
+    }
+
+    .sidebar-brand {
+      font-family: var(--font-body);
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #f5f0e8;
+      letter-spacing: -.01em;
+    }
+
+    .btn-icon {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--ink-faint);
+      padding: .35rem;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      transition: color .15s, background .15s;
+    }
+    .btn-icon:hover { color: #f5f0e8; background: rgba(255,255,255,.08); }
+
+    .breadcrumb {
+      padding: .6rem 1rem;
+      font-size: .75rem;
+      color: var(--ink-faint);
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: .25rem;
+      border-bottom: 1px solid rgba(255,255,255,.06);
+      min-height: 36px;
+    }
+    .breadcrumb-item {
+      cursor: pointer;
+      color: #a89f98;
+      transition: color .15s;
+    }
+    .breadcrumb-item:hover { color: #f5f0e8; }
+    .breadcrumb-sep { color: rgba(255,255,255,.2); }
+
+    #file-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: .5rem 0;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255,255,255,.1) transparent;
+    }
+
+    .file-item {
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+      padding: .55rem 1rem;
+      cursor: pointer;
+      font-size: .875rem;
+      color: #c4bdb6;
+      transition: background .12s, color .12s;
+      border-left: 2px solid transparent;
+      user-select: none;
+    }
+    .file-item:hover {
+      background: var(--sidebar-hover);
+      color: #f5f0e8;
+    }
+    .file-item.active {
+      background: var(--sidebar-active);
+      color: #f5f0e8;
+      border-left-color: var(--accent);
+    }
+    .file-item.is-folder { color: #a89f98; }
+    .file-item.is-folder:hover { color: #f5f0e8; }
+
+    .file-icon { font-size: .9rem; flex-shrink: 0; opacity: .7; }
+    .file-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    .loading-spinner {
+      text-align: center;
+      padding: 2rem 1rem;
+      color: var(--ink-faint);
+      font-size: .85rem;
+    }
+    .spinner-ring {
+      display: inline-block;
+      width: 20px; height: 20px;
+      border: 2px solid rgba(255,255,255,.15);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      margin-bottom: .5rem;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .sidebar-footer {
+      padding: .75rem 1rem;
+      border-top: 1px solid rgba(255,255,255,.08);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .btn-signout {
+      background: none;
+      border: none;
+      color: #6b6560;
+      font-size: .75rem;
+      font-family: var(--font-ui);
+      cursor: pointer;
+      padding: .25rem;
+      transition: color .15s;
+    }
+    .btn-signout:hover { color: #f5f0e8; }
+
+    /* ─── Main Content ───────────────────────────────────────── */
+    #main {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #topbar {
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      padding: .85rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    #btn-toggle-sidebar {
+      display: none;
+    }
+
+    #current-file-name {
+      font-size: .875rem;
+      color: var(--ink-muted);
+      font-weight: 400;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* ─── Welcome State ──────────────────────────────────────── */
+    #welcome {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      text-align: center;
+      padding: 3rem 2rem;
+      color: var(--ink-muted);
+    }
+    #welcome .welcome-icon { font-size: 3rem; opacity: .25; }
+    #welcome h3 { font-family: var(--font-body); font-size: 1.25rem; color: var(--ink); font-weight: 400; }
+    #welcome p { font-size: .9rem; max-width: 280px; line-height: 1.6; }
+
+    /* ─── Markdown Content ───────────────────────────────────── */
+    #content {
+      display: none;
+      flex: 1;
+      padding: 3rem 4rem;
+      max-width: 780px;
+      width: 100%;
+      margin: 0 auto;
+    }
+    #content.visible { display: block; }
+
+    .prose {
+      font-family: var(--font-body);
+      font-size: 1.08rem;
+      line-height: 1.8;
+      color: var(--ink);
+    }
+
+    .prose h1, .prose h2, .prose h3, .prose h4 {
+      font-family: var(--font-body);
+      font-weight: 600;
+      line-height: 1.3;
+      margin-top: 2.25em;
+      margin-bottom: .6em;
+      color: var(--ink);
+    }
+    .prose h1 { font-size: 2rem; letter-spacing: -.02em; margin-top: 0; }
+    .prose h2 { font-size: 1.45rem; letter-spacing: -.01em; padding-bottom: .4em; border-bottom: 1px solid var(--border); }
+    .prose h3 { font-size: 1.15rem; }
+    .prose h4 { font-size: 1rem; }
+
+    .prose p { margin-bottom: 1.25em; }
+    .prose a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+    .prose a:hover { color: #a84424; }
+
+    .prose ul, .prose ol {
+      padding-left: 1.75em;
+      margin-bottom: 1.25em;
+    }
+    .prose li { margin-bottom: .35em; }
+    .prose li > ul, .prose li > ol { margin-top: .35em; margin-bottom: 0; }
+
+    .prose blockquote {
+      margin: 1.5em 0;
+      padding: .75em 1.25em;
+      border-left: 3px solid var(--accent);
+      background: var(--code-bg);
+      border-radius: 0 var(--r) var(--r) 0;
+      color: var(--ink-muted);
+      font-style: italic;
+    }
+    .prose blockquote p { margin-bottom: 0; }
+
+    .prose code {
+      font-family: 'Courier New', Courier, monospace;
+      font-size: .875em;
+      background: var(--code-bg);
+      padding: .15em .4em;
+      border-radius: 3px;
+      color: #7c3d20;
+    }
+
+    .prose pre {
+      background: #1c1917;
+      color: #e8dfd4;
+      padding: 1.25em 1.5em;
+      border-radius: var(--r);
+      overflow-x: auto;
+      margin: 1.5em 0;
+      font-size: .875rem;
+      line-height: 1.6;
+    }
+    .prose pre code {
+      background: none;
+      padding: 0;
+      color: inherit;
+      font-size: inherit;
+    }
+
+    .prose table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.5em 0;
+      font-size: .9rem;
+    }
+    .prose th, .prose td {
+      padding: .65em 1em;
+      border: 1px solid var(--border);
+      text-align: left;
+    }
+    .prose th {
+      background: var(--surface);
+      font-family: var(--font-ui);
+      font-weight: 500;
+      font-size: .8rem;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+    .prose tr:nth-child(even) td { background: rgba(0,0,0,.02); }
+
+    .prose hr {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 2.5em 0;
+    }
+
+    .prose img {
+      max-width: 100%;
+      border-radius: var(--r);
+      margin: 1em 0;
+    }
+
+    /* ─── Mobile Overlay ─────────────────────────────────────── */
+    #sidebar-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.4);
+      z-index: 40;
+    }
+
+    /* ─── Responsive ─────────────────────────────────────────── */
+    @media (max-width: 700px) {
+      :root { --sidebar-w: 270px; }
+
+      #sidebar {
+        position: fixed;
+        left: 0; top: 0; bottom: 0;
+        z-index: 50;
+        transform: translateX(-100%);
+        transition: transform .25s ease;
+      }
+      #sidebar.open {
+        transform: translateX(0);
+      }
+      #sidebar-overlay.visible { display: block; }
+
+      #btn-toggle-sidebar { display: flex; }
+
+      #content {
+        padding: 2rem 1.25rem;
+      }
+      .prose h1 { font-size: 1.6rem; }
+      .prose { font-size: 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ─── Auth Screen ──────────────────────────────────── -->
+<div id="auth-screen">
+  <div class="auth-logo">📖</div>
+  <h1 class="auth-title">MD Reader</h1>
+  <p class="auth-sub">Browse and read your Markdown files from Dropbox with clean, beautiful formatting.</p>
+  <div id="config-warning">
+    ⚠️ App not configured yet. Open <code>index.html</code>, find the line near the top of the script that says <code>APP_KEY = ''</code>, and paste in your Dropbox App Key.
+  </div>
+  <button class="btn-connect" id="btn-connect" onclick="startAuth()">
+    <svg width="18" height="18" viewBox="0 0 32 32" fill="none">
+      <path d="M8 4L16 9.6L8 15.2L0 9.6L8 4Z" fill="white"/><path d="M24 4L32 9.6L24 15.2L16 9.6L24 4Z" fill="white"/>
+      <path d="M8 16.8L16 22.4L8 28L0 22.4L8 16.8Z" fill="white"/><path d="M24 16.8L32 22.4L24 28L16 22.4L24 16.8Z" fill="white"/>
+    </svg>
+    Connect Dropbox
+  </button>
+</div>
+
+<!-- ─── App ──────────────────────────────────────────── -->
+<div id="app">
+  <div id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+  <nav id="sidebar">
+    <div class="sidebar-header">
+      <span class="sidebar-brand">MD Reader</span>
+      <button class="btn-icon" onclick="refreshFolder()" title="Refresh">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="breadcrumb" id="breadcrumb">
+      <span class="breadcrumb-item" onclick="navTo('')">⌂ root</span>
+    </div>
+
+    <div id="file-list">
+      <div class="loading-spinner">
+        <div class="spinner-ring"></div><br>Loading…
+      </div>
+    </div>
+
+    <div class="sidebar-footer">
+      <button class="btn-signout" onclick="signOut()">Sign out</button>
+    </div>
+  </nav>
+
+  <div id="main">
+    <div id="topbar">
+      <button class="btn-icon" id="btn-toggle-sidebar" onclick="openSidebar()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+      </button>
+      <span id="current-file-name">Select a file to read</span>
+    </div>
+
+    <div id="welcome">
+      <div class="welcome-icon">📄</div>
+      <h3>No file selected</h3>
+      <p>Choose a Markdown file from the sidebar to start reading.</p>
+    </div>
+
+    <div id="content">
+      <div class="prose" id="prose-body"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ─────────────────────────────────────────────────────────
+  //  CONFIGURATION — paste your Dropbox App Key here
+  // ─────────────────────────────────────────────────────────
+  const APP_KEY = '';   // ← e.g. 'abc123xyz456def'
+  // ─────────────────────────────────────────────────────────
+
+  const REDIRECT_URI = window.location.origin + window.location.pathname.replace(/\/$/, '');
+  const TOKEN_KEY    = 'mdr_token';
+  const VERIFIER_KEY = 'mdr_verifier';
+
+  let accessToken = localStorage.getItem(TOKEN_KEY) || null;
+  let currentPath = [];
+
+  // ── Init ──────────────────────────────────────────────────
+  async function init() {
+    if (!APP_KEY) {
+      document.getElementById('config-warning').style.display = 'block';
+      document.getElementById('btn-connect').disabled = true;
+      document.getElementById('btn-connect').style.opacity = '.4';
+      return;
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const code   = params.get('code');
+
+    if (code) {
+      // Clear URL without reload
+      history.replaceState(null, '', window.location.pathname);
+      await exchangeCode(code);
+      return;
+    }
+
+    if (accessToken) {
+      showApp();
+      loadFolder('');
+    }
+  }
+
+  // ── PKCE Helpers ──────────────────────────────────────────
+  function randomBase64url(len) {
+    const arr = new Uint8Array(len);
+    crypto.getRandomValues(arr);
+    return btoa(String.fromCharCode(...arr)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+  }
+
+  async function sha256Base64url(str) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+    return btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+  }
+
+  async function startAuth() {
+    const verifier   = randomBase64url(96);
+    const challenge  = await sha256Base64url(verifier);
+    sessionStorage.setItem(VERIFIER_KEY, verifier);
+
+    const url = new URL('https://www.dropbox.com/oauth2/authorize');
+    url.searchParams.set('client_id',             APP_KEY);
+    url.searchParams.set('redirect_uri',          REDIRECT_URI);
+    url.searchParams.set('response_type',         'code');
+    url.searchParams.set('code_challenge',        challenge);
+    url.searchParams.set('code_challenge_method', 'S256');
+    url.searchParams.set('token_access_type',     'offline');
+    window.location = url.toString();
+  }
+
+  async function exchangeCode(code) {
+    const verifier = sessionStorage.getItem(VERIFIER_KEY);
+    if (!verifier) { alert('Auth error: verifier missing. Please try again.'); return; }
+
+    const res = await fetch('https://api.dropboxapi.com/oauth2/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        code,
+        grant_type:    'authorization_code',
+        client_id:     APP_KEY,
+        redirect_uri:  REDIRECT_URI,
+        code_verifier: verifier,
+      }),
+    });
+    const data = await res.json();
+    if (data.access_token) {
+      accessToken = data.access_token;
+      localStorage.setItem(TOKEN_KEY, accessToken);
+      sessionStorage.removeItem(VERIFIER_KEY);
+      showApp();
+      loadFolder('');
+    } else {
+      alert('Authentication failed: ' + (data.error_description || JSON.stringify(data)));
+    }
+  }
+
+  // ── UI ────────────────────────────────────────────────────
+  function showApp() {
+    document.getElementById('auth-screen').style.display = 'none';
+    const app = document.getElementById('app');
+    app.classList.add('visible');
+  }
+
+  function signOut() {
+    localStorage.removeItem(TOKEN_KEY);
+    location.reload();
+  }
+
+  function openSidebar() {
+    document.getElementById('sidebar').classList.add('open');
+    document.getElementById('sidebar-overlay').classList.add('visible');
+  }
+
+  function closeSidebar() {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sidebar-overlay').classList.remove('visible');
+  }
+
+  // ── File System ───────────────────────────────────────────
+  async function dbxPost(endpoint, body, contentHeaders = {}) {
+    const res = await fetch('https://api.dropboxapi.com' + endpoint, {
+      method: 'POST',
+      headers: {
+        Authorization: 'Bearer ' + accessToken,
+        'Content-Type': 'application/json',
+        ...contentHeaders,
+      },
+      body: JSON.stringify(body),
+    });
+    if (res.status === 401) { signOut(); return null; }
+    return res.json();
+  }
+
+  async function loadFolder(pathStr) {
+    const fl = document.getElementById('file-list');
+    fl.innerHTML = '<div class="loading-spinner"><div class="spinner-ring"></div><br>Loading…</div>';
+
+    const data = await dbxPost('/2/files/list_folder', { path: pathStr, limit: 200 });
+    if (!data) return;
+
+    const entries = (data.entries || []).sort((a, b) => {
+      if (a['.tag'] !== b['.tag']) return a['.tag'] === 'folder' ? -1 : 1;
+      return a.name.localeCompare(b.name);
+    });
+
+    fl.innerHTML = '';
+
+    if (pathStr !== '') {
+      const up = document.createElement('div');
+      up.className = 'file-item is-folder';
+      up.innerHTML = '<span class="file-icon">←</span><span class="file-name">.. up a level</span>';
+      up.onclick = () => {
+        currentPath.pop();
+        updateBreadcrumb();
+        loadFolder(currentPath.length ? '/' + currentPath.join('/') : '');
+      };
+      fl.appendChild(up);
+    }
+
+    entries.forEach(entry => {
+      if (entry['.tag'] === 'file' && !entry.name.toLowerCase().endsWith('.md')) return;
+
+      const div = document.createElement('div');
+      div.className = 'file-item' + (entry['.tag'] === 'folder' ? ' is-folder' : '');
+      const icon = entry['.tag'] === 'folder' ? '📁' : '📄';
+      div.innerHTML = `<span class="file-icon">${icon}</span><span class="file-name" title="${entry.name}">${entry.name}</span>`;
+
+      if (entry['.tag'] === 'folder') {
+        div.onclick = () => {
+          currentPath.push(entry.name);
+          updateBreadcrumb();
+          loadFolder(entry.path_lower);
+          closeSidebar();
+        };
+      } else {
+        div.onclick = () => {
+          document.querySelectorAll('.file-item').forEach(el => el.classList.remove('active'));
+          div.classList.add('active');
+          loadFile(entry.path_lower, entry.name);
+          closeSidebar();
+        };
+      }
+      fl.appendChild(div);
+    });
+
+    if (fl.children.length === 0) {
+      fl.innerHTML = '<div class="loading-spinner" style="color:#6b6560">No .md files here</div>';
+    }
+  }
+
+  function updateBreadcrumb() {
+    const bc = document.getElementById('breadcrumb');
+    bc.innerHTML = '<span class="breadcrumb-item" onclick="navTo(-1)">⌂</span>';
+    currentPath.forEach((seg, i) => {
+      bc.innerHTML += `<span class="breadcrumb-sep">›</span>`;
+      bc.innerHTML += `<span class="breadcrumb-item" onclick="navTo(${i})">${seg}</span>`;
+    });
+  }
+
+  function navTo(idx) {
+    if (idx === -1) {
+      currentPath = [];
+      updateBreadcrumb();
+      loadFolder('');
+    } else {
+      currentPath = currentPath.slice(0, idx + 1);
+      updateBreadcrumb();
+      loadFolder('/' + currentPath.join('/'));
+    }
+  }
+
+  function refreshFolder() {
+    loadFolder(currentPath.length ? '/' + currentPath.join('/') : '');
+  }
+
+  // ── Markdown Rendering ────────────────────────────────────
+  async function loadFile(path, name) {
+    document.getElementById('current-file-name').textContent = name;
+    document.getElementById('welcome').style.display = 'none';
+    const content = document.getElementById('content');
+    content.classList.add('visible');
+    const prose = document.getElementById('prose-body');
+    prose.innerHTML = '<span style="color:var(--ink-faint);font-family:var(--font-ui);font-size:.875rem">Loading…</span>';
+
+    const res = await fetch('https://content.dropboxapi.com/2/files/download', {
+      method: 'POST',
+      headers: {
+        Authorization: 'Bearer ' + accessToken,
+        'Dropbox-API-Arg': JSON.stringify({ path }),
+      },
+    });
+
+    if (!res.ok) {
+      prose.innerHTML = '<span style="color:var(--accent)">Failed to load file.</span>';
+      return;
+    }
+
+    const text = await res.text();
+    prose.innerHTML = marked.parse(text);
+
+    // Scroll to top
+    document.getElementById('main').scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // ── Start ─────────────────────────────────────────────────
+  init();
+</script>
+</body>
+</html>
