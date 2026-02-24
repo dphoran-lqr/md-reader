@@ -1,4 +1,4 @@
-const CACHE = 'mdr-v1';
+const CACHE = 'mdr-v3';
 const ASSETS = [
   '/md-reader/',
   '/md-reader/index.html',
