@@ -436,6 +436,42 @@
     }
 
     /* ─── Responsive ─────────────────────────────────────────── */
+    /* ─── Print Styles ───────────────────────────────────────── */
+    @media print {
+      #sidebar, #topbar, #sidebar-overlay { display: none !important; }
+      #main { overflow: visible; }
+      #app { display: block; }
+      #content {
+        display: block !important;
+        padding: 0;
+        max-width: 100%;
+        margin: 0;
+      }
+      .prose {
+        font-size: 11pt;
+        line-height: 1.7;
+        color: #000;
+      }
+      .prose h1 { font-size: 22pt; }
+      .prose h2 { font-size: 16pt; border-bottom: 1px solid #ccc; }
+      .prose h3 { font-size: 13pt; }
+      .prose pre {
+        background: #f4f4f4 !important;
+        color: #000 !important;
+        border: 1px solid #ddd;
+        page-break-inside: avoid;
+      }
+      .prose blockquote {
+        border-left: 3px solid #999;
+        background: #f9f9f9;
+        color: #333;
+      }
+      .prose a { color: #000; text-decoration: underline; }
+      .prose table { page-break-inside: avoid; }
+      .prose img { max-width: 100%; page-break-inside: avoid; }
+      #welcome { display: none !important; }
+    }
+
     @media (max-width: 700px) {
       :root { --sidebar-w: 270px; }
 
@@ -517,6 +553,12 @@
         </svg>
       </button>
       <span id="current-file-name">Select a file to read</span>
+      <button class="btn-icon" id="btn-print" onclick="printFile()" title="Print" style="margin-left:auto; display:none;">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+          <rect x="6" y="14" width="12" height="8"/>
+        </svg>
+      </button>
     </div>
 
     <div id="welcome">
@@ -746,6 +788,7 @@
   // ── Markdown Rendering ────────────────────────────────────
   async function loadFile(path, name) {
     document.getElementById('current-file-name').textContent = name;
+    document.getElementById('btn-print').style.display = 'flex';
     document.getElementById('welcome').style.display = 'none';
     const content = document.getElementById('content');
     content.classList.add('visible');
@@ -770,6 +813,11 @@
 
     // Scroll to top
     document.getElementById('main').scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // ── Print ─────────────────────────────────────────────────
+  function printFile() {
+    window.print();
   }
 
   // ── Service Worker ────────────────────────────────────────
