@@ -1008,13 +1008,13 @@
     return getFavorites().some(f => f.path === path);
   }
 
-  function toggleFavorite(path, name, event) {
+  function toggleFavorite(path, name, type, event) {
     event.stopPropagation();
     let favs = getFavorites();
     if (isFavorite(path)) {
       favs = favs.filter(f => f.path !== path);
     } else {
-      favs.push({ path, name });
+      favs.push({ path, name, type: type || 'file' });
     }
     saveFavorites(favs);
     renderFavorites();
@@ -1050,7 +1050,7 @@
     list.style.display = 'block';
 
     if (favs.length === 0) {
-      list.innerHTML = '<div class="no-favs">Star a file to pin it here</div>';
+      list.innerHTML = '<div class="no-favs">Star a file or folder to pin it here</div>';
       return;
     }
 
@@ -1058,17 +1058,18 @@
     favs.forEach(fav => {
       const div = document.createElement('div');
       div.className = 'fav-item';
-      if (fav.path === currentFilePath) div.classList.add('active');
+      const isFolder = fav.type === 'folder';
+      if (!isFolder && fav.path === currentFilePath) div.classList.add('active');
 
-      // Show a shortened path as subtitle
       const parts = fav.path.split('/').filter(Boolean);
       const displayPath = parts.length > 1 ? parts.slice(0, -1).join(' › ') : 'root';
+      const icon = isFolder ? '📁' : '★';
 
       div.innerHTML = `
-        <span style="font-size:.8rem;flex-shrink:0;opacity:.7">★</span>
+        <span style="font-size:.8rem;flex-shrink:0;opacity:.7">${icon}</span>
         <div class="fav-item-info">
           <div class="fav-item-name">${fav.name}</div>
-          <div class="fav-item-path">${displayPath}</div>
+          <div class="fav-item-path">${isFolder ? displayPath : displayPath}</div>
         </div>
         <button class="fav-remove" title="Remove from favorites">✕</button>
       `;
@@ -1077,7 +1078,18 @@
         document.querySelectorAll('.fav-item').forEach(el => el.classList.remove('active'));
         div.classList.add('active');
         document.querySelectorAll('.file-item').forEach(el => el.classList.remove('active'));
-        loadFile(fav.path, fav.name);
+        if (isFolder) {
+          // Navigate into the folder
+          const segments = fav.path.split('/').filter(Boolean);
+          currentPath = segments;
+          updateBreadcrumb();
+          loadFolder(fav.path);
+          // Clear search if active
+          const searchInput = document.getElementById('search-input');
+          if (searchInput.value) { searchInput.value = ''; handleSearch(''); }
+        } else {
+          loadFile(fav.path, fav.name);
+        }
         closeSidebar();
       };
       list.appendChild(div);
@@ -1139,7 +1151,9 @@
       const icon = entry['.tag'] === 'folder' ? '📁' : '📄';
 
       if (entry['.tag'] === 'folder') {
-        div.innerHTML = `<span class="file-icon">${icon}</span><span class="file-name" title="${entry.name}">${entry.name}</span>`;
+        const starred = isFavorite(entry.path_lower);
+        div.innerHTML = `<span class="file-icon">📁</span><span class="file-name" title="${entry.name}">${entry.name}</span><button class="star-btn ${starred ? 'starred' : ''}" data-path="${entry.path_lower}" title="${starred ? 'Remove from favorites' : 'Add to favorites'}">${starred ? '★' : '☆'}</button>`;
+        div.querySelector('.star-btn').onclick = (e) => toggleFavorite(entry.path_lower, entry.name, 'folder', e);
         div.onclick = () => {
           currentPath.push(entry.name);
           updateBreadcrumb();
@@ -1149,7 +1163,7 @@
       } else {
         const starred = isFavorite(entry.path_lower);
         div.innerHTML = `<span class="file-icon">📄</span><span class="file-name" title="${entry.name}">${entry.name}</span><button class="star-btn ${starred ? 'starred' : ''}" data-path="${entry.path_lower}" title="${starred ? 'Remove from favorites' : 'Add to favorites'}">${starred ? '★' : '☆'}</button>`;
-        div.querySelector('.star-btn').onclick = (e) => toggleFavorite(entry.path_lower, entry.name, e);
+        div.querySelector('.star-btn').onclick = (e) => toggleFavorite(entry.path_lower, entry.name, 'file', e);
         div.onclick = () => {
           document.querySelectorAll('.file-item').forEach(el => el.classList.remove('active'));
           div.classList.add('active');
