@@ -265,7 +265,133 @@
     }
     .btn-signout:hover { color: #f5f0e8; }
 
-    /* ─── Main Content ───────────────────────────────────────── */
+    /* ─── Favorites ──────────────────────────────────────────── */
+    #favorites-section {
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      flex-shrink: 0;
+    }
+    .favorites-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: .5rem 1rem .4rem;
+      cursor: pointer;
+      user-select: none;
+    }
+    .favorites-label {
+      font-size: .7rem;
+      font-weight: 500;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: #6b6560;
+    }
+    .favorites-toggle { font-size: .65rem; color: #6b6560; transition: color .15s; }
+    .favorites-header:hover .favorites-label,
+    .favorites-header:hover .favorites-toggle { color: #a89f98; }
+    #favorites-list { padding: .25rem 0; }
+    .fav-item {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      padding: .45rem 1rem;
+      cursor: pointer;
+      font-size: .8rem;
+      color: #c4bdb6;
+      transition: background .12s, color .12s;
+      border-left: 2px solid transparent;
+    }
+    .fav-item:hover { background: var(--sidebar-hover); color: #f5f0e8; }
+    .fav-item.active { background: var(--sidebar-active); color: #f5f0e8; border-left-color: var(--accent); }
+    .fav-item-info { flex: 1; overflow: hidden; }
+    .fav-item-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .fav-item-path { font-size: .68rem; color: #6b6560; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .fav-remove {
+      opacity: 0;
+      background: none;
+      border: none;
+      color: #6b6560;
+      cursor: pointer;
+      padding: .1rem .25rem;
+      border-radius: 3px;
+      font-size: .85rem;
+      line-height: 1;
+      flex-shrink: 0;
+      transition: opacity .15s, color .15s;
+    }
+    .fav-item:hover .fav-remove { opacity: 1; }
+    .fav-remove:hover { color: var(--accent); }
+    .no-favs { padding: .4rem 1rem .75rem; font-size: .75rem; color: #4a4540; font-style: italic; }
+
+    /* ─── Search Box ─────────────────────────────────────────── */
+    #search-wrap {
+      padding: .5rem .75rem;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      flex-shrink: 0;
+    }
+    #search-input {
+      width: 100%;
+      background: rgba(255,255,255,.07);
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 5px;
+      padding: .45rem .75rem .45rem 2rem;
+      font-family: var(--font-ui);
+      font-size: .8rem;
+      color: #e8e3dc;
+      outline: none;
+      transition: border-color .15s, background .15s;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='%236b6560' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: .6rem center;
+    }
+    #search-input::placeholder { color: #4a4540; }
+    #search-input:focus { border-color: rgba(255,255,255,.25); background-color: rgba(255,255,255,.1); }
+
+    /* search results mode */
+    #search-results {
+      display: none;
+      flex: 1;
+      overflow-y: auto;
+      padding: .5rem 0;
+    }
+    #search-results.visible { display: block; }
+    .search-result-item {
+      display: flex;
+      flex-direction: column;
+      padding: .5rem 1rem;
+      cursor: pointer;
+      border-left: 2px solid transparent;
+      transition: background .12s;
+    }
+    .search-result-item:hover { background: var(--sidebar-hover); }
+    .search-result-item.active { background: var(--sidebar-active); border-left-color: var(--accent); }
+    .search-result-name { font-size: .85rem; color: #e8e3dc; }
+    .search-result-path { font-size: .7rem; color: #6b6560; margin-top: .1rem; }
+    .search-highlight { color: #f0c040; font-weight: 500; }
+    .search-empty { padding: 1.5rem 1rem; font-size: .8rem; color: #4a4540; text-align: center; font-style: italic; }
+
+    /* ─── Recent Files ───────────────────────────────────────── */
+    #recent-section {
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      flex-shrink: 0;
+    }
+
+    /* Star button on file items */
+    .file-item .star-btn {
+      opacity: 0;
+      background: none;
+      border: none;
+      color: #6b6560;
+      cursor: pointer;
+      padding: .1rem .15rem;
+      border-radius: 3px;
+      font-size: .85rem;
+      line-height: 1;
+      flex-shrink: 0;
+      transition: opacity .15s, color .15s;
+    }
+    .file-item:hover .star-btn { opacity: 1; }
+    .file-item .star-btn:hover { color: #f0c040; }
+    .file-item .star-btn.starred { opacity: 1; color: #f0c040; }
     #main {
       flex: 1;
       overflow-y: auto;
@@ -531,8 +657,31 @@
     </div>
 
     <div class="breadcrumb" id="breadcrumb">
-      <span class="breadcrumb-item" onclick="navTo('')">⌂ root</span>
+      <span class="breadcrumb-item" onclick="navTo(-1)">⌂ root</span>
     </div>
+
+    <div id="search-wrap">
+      <input id="search-input" type="search" placeholder="Search files…" autocomplete="off" oninput="handleSearch(this.value)" />
+    </div>
+
+    <div id="favorites-section">
+      <div class="favorites-header" onclick="toggleFavorites()">
+        <span class="favorites-label">★ Favorites</span>
+        <span class="favorites-toggle" id="fav-toggle-icon">▾</span>
+      </div>
+      <div id="favorites-list"></div>
+    </div>
+
+    <div id="recent-section">
+      <div class="favorites-header" onclick="toggleRecent()">
+        <span class="favorites-label">🕐 Recent</span>
+        <span class="favorites-toggle" id="recent-toggle-icon">▾</span>
+      </div>
+      <div id="recent-list"></div>
+    </div>
+
+    <!-- Search results overlay (replaces file-list when searching) -->
+    <div id="search-results"></div>
 
     <div id="file-list">
       <div class="loading-spinner">
@@ -557,6 +706,12 @@
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
           <rect x="6" y="14" width="12" height="8"/>
+        </svg>
+      </button>
+      <button class="btn-icon" id="btn-share" onclick="shareToSpeechify()" title="Send to Speechify" style="display:none;">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+          <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
         </svg>
       </button>
     </div>
@@ -586,6 +741,7 @@
 
   let accessToken = localStorage.getItem(TOKEN_KEY) || null;
   let currentPath = [];
+  let currentFilePath = null;
 
   // ── Init ──────────────────────────────────────────────────
   async function init() {
@@ -671,6 +827,8 @@
     document.getElementById('auth-screen').style.display = 'none';
     const app = document.getElementById('app');
     app.classList.add('visible');
+    renderFavorites();
+    renderRecent();
   }
 
   function signOut() {
@@ -686,6 +844,250 @@
   function closeSidebar() {
     document.getElementById('sidebar').classList.remove('open');
     document.getElementById('sidebar-overlay').classList.remove('visible');
+  }
+
+  // ── Recent Files ───────────────────────────────────────────
+  const RECENT_KEY = 'mdr_recent';
+  const RECENT_MAX = 8;
+  let recentOpen = true;
+
+  function getRecent() {
+    try { return JSON.parse(localStorage.getItem(RECENT_KEY)) || []; }
+    catch { return []; }
+  }
+
+  function addRecent(path, name) {
+    let recents = getRecent().filter(r => r.path !== path);
+    recents.unshift({ path, name });
+    if (recents.length > RECENT_MAX) recents = recents.slice(0, RECENT_MAX);
+    localStorage.setItem(RECENT_KEY, JSON.stringify(recents));
+    renderRecent();
+  }
+
+  function renderRecent() {
+    const recents = getRecent();
+    const list = document.getElementById('recent-list');
+    if (!recentOpen) { list.style.display = 'none'; return; }
+    list.style.display = 'block';
+
+    if (recents.length === 0) {
+      list.innerHTML = '<div class="no-favs">Files you open will appear here</div>';
+      return;
+    }
+
+    list.innerHTML = '';
+    recents.forEach(r => {
+      const div = document.createElement('div');
+      div.className = 'fav-item';
+      if (r.path === currentFilePath) div.classList.add('active');
+      const parts = r.path.split('/').filter(Boolean);
+      const displayPath = parts.length > 1 ? parts.slice(0, -1).join(' › ') : 'root';
+      div.innerHTML = `
+        <span style="font-size:.75rem;flex-shrink:0;opacity:.5">🕐</span>
+        <div class="fav-item-info">
+          <div class="fav-item-name">${r.name}</div>
+          <div class="fav-item-path">${displayPath}</div>
+        </div>
+      `;
+      div.onclick = () => {
+        document.querySelectorAll('.fav-item').forEach(el => el.classList.remove('active'));
+        div.classList.add('active');
+        document.querySelectorAll('.file-item').forEach(el => el.classList.remove('active'));
+        loadFile(r.path, r.name);
+        closeSidebar();
+      };
+      list.appendChild(div);
+    });
+  }
+
+  function toggleRecent() {
+    recentOpen = !recentOpen;
+    document.getElementById('recent-toggle-icon').textContent = recentOpen ? '▾' : '▸';
+    renderRecent();
+  }
+
+  // ── Search ─────────────────────────────────────────────────
+  // We build a flat index of all files across Dropbox for searching
+  let searchIndex = [];
+  let searchIndexBuilt = false;
+
+  async function buildSearchIndex(pathStr) {
+    const data = await dbxPost('/2/files/list_folder', { path: pathStr, limit: 2000, recursive: true });
+    if (!data) return;
+    searchIndex = (data.entries || [])
+      .filter(e => e['.tag'] === 'file' && e.name.toLowerCase().endsWith('.md'))
+      .map(e => ({ path: e.path_lower, name: e.name }));
+    searchIndexBuilt = true;
+  }
+
+  function handleSearch(query) {
+    const fl = document.getElementById('file-list');
+    const sr = document.getElementById('search-results');
+    const favSec = document.getElementById('favorites-section');
+    const recentSec = document.getElementById('recent-section');
+    const breadcrumb = document.getElementById('breadcrumb');
+
+    if (!query.trim()) {
+      // Clear search — show normal view
+      sr.classList.remove('visible');
+      fl.style.display = '';
+      favSec.style.display = '';
+      recentSec.style.display = '';
+      breadcrumb.style.display = '';
+      return;
+    }
+
+    // Hide normal nav, show results
+    fl.style.display = 'none';
+    favSec.style.display = 'none';
+    recentSec.style.display = 'none';
+    breadcrumb.style.display = 'none';
+    sr.classList.add('visible');
+
+    if (!searchIndexBuilt) {
+      sr.innerHTML = '<div class="search-empty">Building index…</div>';
+      buildSearchIndex('').then(() => renderSearchResults(query));
+      return;
+    }
+    renderSearchResults(query);
+  }
+
+  function renderSearchResults(query) {
+    const sr = document.getElementById('search-results');
+    const q = query.toLowerCase().trim();
+    const matches = searchIndex.filter(f => f.name.toLowerCase().includes(q));
+
+    if (matches.length === 0) {
+      sr.innerHTML = '<div class="search-empty">No files match "' + query + '"</div>';
+      return;
+    }
+
+    sr.innerHTML = '';
+    matches.forEach(f => {
+      const div = document.createElement('div');
+      div.className = 'search-result-item';
+      if (f.path === currentFilePath) div.classList.add('active');
+
+      const parts = f.path.split('/').filter(Boolean);
+      const displayPath = parts.length > 1 ? parts.slice(0, -1).join(' › ') : 'root';
+
+      // Highlight matched portion of filename
+      const idx = f.name.toLowerCase().indexOf(q);
+      const highlighted = f.name.slice(0, idx)
+        + '<span class="search-highlight">' + f.name.slice(idx, idx + q.length) + '</span>'
+        + f.name.slice(idx + q.length);
+
+      div.innerHTML = `
+        <div class="search-result-name">${highlighted}</div>
+        <div class="search-result-path">${displayPath}</div>
+      `;
+      div.onclick = () => {
+        document.querySelectorAll('.search-result-item').forEach(el => el.classList.remove('active'));
+        div.classList.add('active');
+        loadFile(f.path, f.name);
+        closeSidebar();
+      };
+      sr.appendChild(div);
+    });
+  }
+
+  // ── Favorites ─────────────────────────────────────────────
+  const FAV_KEY = 'mdr_favorites';
+  let favoritesOpen = true;
+
+  function getFavorites() {
+    try { return JSON.parse(localStorage.getItem(FAV_KEY)) || []; }
+    catch { return []; }
+  }
+
+  function saveFavorites(favs) {
+    localStorage.setItem(FAV_KEY, JSON.stringify(favs));
+  }
+
+  function isFavorite(path) {
+    return getFavorites().some(f => f.path === path);
+  }
+
+  function toggleFavorite(path, name, event) {
+    event.stopPropagation();
+    let favs = getFavorites();
+    if (isFavorite(path)) {
+      favs = favs.filter(f => f.path !== path);
+    } else {
+      favs.push({ path, name });
+    }
+    saveFavorites(favs);
+    renderFavorites();
+    // Update star in file list
+    document.querySelectorAll('.star-btn').forEach(btn => {
+      if (btn.dataset.path === path) {
+        btn.classList.toggle('starred', isFavorite(path));
+        btn.title = isFavorite(path) ? 'Remove from favorites' : 'Add to favorites';
+        btn.textContent = isFavorite(path) ? '★' : '☆';
+      }
+    });
+  }
+
+  function removeFavorite(path, event) {
+    event.stopPropagation();
+    const favs = getFavorites().filter(f => f.path !== path);
+    saveFavorites(favs);
+    renderFavorites();
+    // Update star in file list if visible
+    document.querySelectorAll('.star-btn').forEach(btn => {
+      if (btn.dataset.path === path) {
+        btn.classList.remove('starred');
+        btn.title = 'Add to favorites';
+        btn.textContent = '☆';
+      }
+    });
+  }
+
+  function renderFavorites() {
+    const favs = getFavorites();
+    const list = document.getElementById('favorites-list');
+    if (!favoritesOpen) { list.style.display = 'none'; return; }
+    list.style.display = 'block';
+
+    if (favs.length === 0) {
+      list.innerHTML = '<div class="no-favs">Star a file to pin it here</div>';
+      return;
+    }
+
+    list.innerHTML = '';
+    favs.forEach(fav => {
+      const div = document.createElement('div');
+      div.className = 'fav-item';
+      if (fav.path === currentFilePath) div.classList.add('active');
+
+      // Show a shortened path as subtitle
+      const parts = fav.path.split('/').filter(Boolean);
+      const displayPath = parts.length > 1 ? parts.slice(0, -1).join(' › ') : 'root';
+
+      div.innerHTML = `
+        <span style="font-size:.8rem;flex-shrink:0;opacity:.7">★</span>
+        <div class="fav-item-info">
+          <div class="fav-item-name">${fav.name}</div>
+          <div class="fav-item-path">${displayPath}</div>
+        </div>
+        <button class="fav-remove" title="Remove from favorites">✕</button>
+      `;
+      div.querySelector('.fav-remove').onclick = (e) => removeFavorite(fav.path, e);
+      div.onclick = () => {
+        document.querySelectorAll('.fav-item').forEach(el => el.classList.remove('active'));
+        div.classList.add('active');
+        document.querySelectorAll('.file-item').forEach(el => el.classList.remove('active'));
+        loadFile(fav.path, fav.name);
+        closeSidebar();
+      };
+      list.appendChild(div);
+    });
+  }
+
+  function toggleFavorites() {
+    favoritesOpen = !favoritesOpen;
+    document.getElementById('fav-toggle-icon').textContent = favoritesOpen ? '▾' : '▸';
+    renderFavorites();
   }
 
   // ── File System ───────────────────────────────────────────
@@ -735,9 +1137,9 @@
       const div = document.createElement('div');
       div.className = 'file-item' + (entry['.tag'] === 'folder' ? ' is-folder' : '');
       const icon = entry['.tag'] === 'folder' ? '📁' : '📄';
-      div.innerHTML = `<span class="file-icon">${icon}</span><span class="file-name" title="${entry.name}">${entry.name}</span>`;
 
       if (entry['.tag'] === 'folder') {
+        div.innerHTML = `<span class="file-icon">${icon}</span><span class="file-name" title="${entry.name}">${entry.name}</span>`;
         div.onclick = () => {
           currentPath.push(entry.name);
           updateBreadcrumb();
@@ -745,6 +1147,9 @@
           closeSidebar();
         };
       } else {
+        const starred = isFavorite(entry.path_lower);
+        div.innerHTML = `<span class="file-icon">📄</span><span class="file-name" title="${entry.name}">${entry.name}</span><button class="star-btn ${starred ? 'starred' : ''}" data-path="${entry.path_lower}" title="${starred ? 'Remove from favorites' : 'Add to favorites'}">${starred ? '★' : '☆'}</button>`;
+        div.querySelector('.star-btn').onclick = (e) => toggleFavorite(entry.path_lower, entry.name, e);
         div.onclick = () => {
           document.querySelectorAll('.file-item').forEach(el => el.classList.remove('active'));
           div.classList.add('active');
@@ -757,6 +1162,11 @@
 
     if (fl.children.length === 0) {
       fl.innerHTML = '<div class="loading-spinner" style="color:#6b6560">No .md files here</div>';
+    }
+
+    // Build search index silently in background on first load
+    if (!searchIndexBuilt && pathStr === '') {
+      buildSearchIndex('');
     }
   }
 
@@ -787,8 +1197,12 @@
 
   // ── Markdown Rendering ────────────────────────────────────
   async function loadFile(path, name) {
+    currentFilePath = path;
+    addRecent(path, name);
     document.getElementById('current-file-name').textContent = name;
     document.getElementById('btn-print').style.display = 'flex';
+    document.getElementById('btn-share').style.display = 'flex';
+    renderFavorites();
     document.getElementById('welcome').style.display = 'none';
     const content = document.getElementById('content');
     content.classList.add('visible');
@@ -813,6 +1227,57 @@
 
     // Scroll to top
     document.getElementById('main').scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // ── Share to Speechify ────────────────────────────────────
+  async function shareToSpeechify() {
+    // Extract plain text from the rendered markdown (strips all HTML tags)
+    const prose = document.getElementById('prose-body');
+    const plainText = prose.innerText || prose.textContent;
+    const fileName = document.getElementById('current-file-name').textContent;
+
+    // Use Web Share API if available (Android Chrome supports this)
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: fileName.replace('.md', ''),
+          text: plainText,
+        });
+        return;
+      } catch (e) {
+        // User cancelled or share failed — fall through to clipboard
+        if (e.name === 'AbortError') return;
+      }
+    }
+
+    // Fallback: copy to clipboard and prompt user
+    try {
+      await navigator.clipboard.writeText(plainText);
+      showToast('Text copied — paste into Speechify');
+    } catch (e) {
+      showToast('Could not copy text');
+    }
+  }
+
+  // ── Toast notification ────────────────────────────────────
+  function showToast(msg) {
+    let toast = document.getElementById('toast');
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.id = 'toast';
+      toast.style.cssText = `
+        position:fixed; bottom:1.5rem; left:50%; transform:translateX(-50%);
+        background:#1c1917; color:#f5f0e8; font-family:var(--font-ui);
+        font-size:.85rem; padding:.6rem 1.25rem; border-radius:6px;
+        box-shadow:0 4px 16px rgba(0,0,0,.3); z-index:999;
+        transition:opacity .3s; white-space:nowrap;
+      `;
+      document.body.appendChild(toast);
+    }
+    toast.textContent = msg;
+    toast.style.opacity = '1';
+    clearTimeout(toast._timer);
+    toast._timer = setTimeout(() => { toast.style.opacity = '0'; }, 3000);
   }
 
   // ── Print ─────────────────────────────────────────────────
